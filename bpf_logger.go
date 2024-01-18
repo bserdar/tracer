@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cilium/ebpf/perf"
+	"github.com/kubeshark/ebpf/perf"
 	"github.com/go-errors/errors"
 	"github.com/rs/zerolog/log"
 )

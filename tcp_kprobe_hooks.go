@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cilium/ebpf/link"
+	"github.com/kubeshark/ebpf/link"
 	"github.com/go-errors/errors"
 )
 
