@@ -26,7 +26,6 @@ type Tracer struct {
 	tcpKprobeHooks  tcpKprobeHooks
 	sslHooksStructs []sslHooks
 	goHooksStructs  []goHooks
-	mysqlHooks      []*MysqlHooks
 	poller          *tlsPoller
 	bpfLogger       *bpfLogger
 	registeredPids  sync.Map
@@ -121,14 +120,6 @@ func (t *Tracer) GlobalGoTarget(procfs string, pid string) error {
 	return t.targetGoPid(procfs, uint32(_pid))
 }
 
-func (t *Tracer) GlobalMysqldTarget(procfs string, pid string) error {
-	pidn, err := strconv.Atoi(pid)
-	if err != nil {
-		return err
-	}
-
-	return t.targetMysqldPid(procfs, uint32(pidn))
-}
 
 func (t *Tracer) AddSSLLibPid(procfs string, pid uint32) error {
 	sslLibrary, err := proc.FindSSLLib(pid)
@@ -264,30 +255,6 @@ func (t *Tracer) targetGoPid(procfs string, pid uint32) error {
 	return nil
 }
 
-func (t *Tracer) targetMysqldPid(procfs string, pid uint32) error {
-	hooks, err := NewMysqlHooks(procfs, pid)
-	if err != nil {
-		log.Info().Msg(fmt.Sprintf("PID skipped: Cannot load mysqld binary (pid: %v) %s", pid, err))
-		return nil
-	}
-	if err := t.targetSSLLibPid(pid, hooks.SSLLibPath); err != nil {
-		log.Info().Msgf("PID skipped: Cannot attach uprobes to mysqld ssl lib (pid: %v) %v", pid, err)
-		return nil
-	}
-	if err := hooks.AttachUprobesToFile(&t.bpfObjects); err != nil {
-		log.Info().Msgf("PID skipped: Cannot attach uprobes to mysqld (pid: %v) %v", pid, err)
-		return nil // hide the error on purpose
-	}
-
-	log.Info().Msgf("Targeting Mysqld (pid: %v)", pid)
-	t.mysqlHooks = append(t.mysqlHooks, hooks)
-	pids := t.bpfObjects.tracerMaps.PidsMap
-	if err := pids.Put(pid, uint32(1)); err != nil {
-		return errors.Wrap(err, 0)
-	}
-	t.registeredPids.Store(pid, true)
-	return nil
-}
 
 func LogError(err error) {
 	var e *errors.Error

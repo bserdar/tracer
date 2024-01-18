@@ -108,12 +108,4 @@ func createTracer(streamsMap *TcpStreamMap) {
 		}
 	}
 
-	// A quick way to instrument mysqld without PID filtering - used for debuging and troubleshooting
-	//
-	if os.Getenv("KUBESHARK_GLOBAL_MYSQLD_PID") != "" {
-		if err := tracer.GlobalMysqldTarget(*procfs, os.Getenv("KUBESHARK_GLOBAL_MYSQLD_PID")); err != nil {
-			LogError(err)
-			return
-		}
-	}
 }
